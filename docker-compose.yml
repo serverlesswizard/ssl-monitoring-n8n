@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+
+    ports:
+      - "5678:5678"
+
+    environment:
+      - n8n_host=localhost
+      - n8n_port=5678
+      - n8n_protocol=http
+      - n8n_basic_auth_active=true
+      - n8n_basic_auth_username=wyzadmin@123
+      - n8n_basic_auth_passsword=Qwerty#$%2026
+
+      - TZ=Asia/Kolkata
+      - Generic_Timezone=Asia/Kolkata
+      - Execution_Process= main
+
+    volumes: 
+      - n8n_data:/home/node/.n8n
+
+volumes: 
+  n8n_data:
