@@ -22,20 +22,6 @@
     },
     {
       "parameters": {
-        "executeOnce": false,
-        "command": "=echo | openssl s_client -servername {{$json.domain}} -connect {{$json.domain}}:{{$json.port}} 2>/dev/null | openssl x509 -noout -enddate -fingerprint -sha256\n"
-      },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
-      "position": [
-        48,
-        0
-      ],
-      "id": "61bde3b7-79af-4f29-b788-9cd87f249d0a",
-      "name": "Execute Command"
-    },
-    {
-      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -78,69 +64,6 @@
     },
     {
       "parameters": {
-        "mode": "runOnceForEachItem",
-        "jsCode": "const output = $json.stdout;\n\n// Extract expiry date\nconst match = output.match(/notAfter=(.*)/);\nif (!match) {\n  throw new Error('Expiry date not found');\n}\n\nconst expiryDate = new Date(match[1].trim());\n\n// Calculate days left (TypeScript-safe)\nconst now = new Date();\nconst msLeft = expiryDate.getTime() - now.getTime();\nconst daysLeft = Math.floor(msLeft / (1000 * 60 * 60 * 24));\n\n// Return OBJECT (Function Item requirement)\nreturn {\n  expiryDate: expiryDate.toISOString(),\n  daysLeft\n};\n"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        256,
-        0
-      ],
-      "id": "695cdf62-a199-427c-8714-bbbbad152a72",
-      "name": "Code in JavaScript"
-    },
-    {
-      "parameters": {
-        "fromEmail": "vishal.anand@wyzmindz.com",
-        "toEmail": "wasif.ahmed@wyzmindz.com",
-        "subject": "=⚠️ SSL Certificate Expiry Alert – {{$json.daysLeft}} days remaining",
-        "emailFormat": "text",
-        "text": "=Hello Team,\n\nThis is an automated alert to inform you that an SSL certificate is nearing expiration.\n\nCertificate Details:\n--------------------\nDomain        : {{ $('Get row(s) in sheet').item.json.domain }}\nPort          : {{ $('Get row(s) in sheet').item.json.port }}\nExpiry Date  : {{$json.expiryDate}}\nDays Remaining: {{$json.daysLeft}}\n\nAction Required:\n----------------\nPlease renew the SSL certificate before it expires to avoid service disruption.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nSSL Monitoring Bot\n",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        976,
-        -144
-      ],
-      "id": "a503a937-ab19-4633-bd69-39fdab9a578b",
-      "name": "Send email",
-      "webhookId": "c9365294-35f6-4999-8dd8-dee5cedaf66f",
-      "credentials": {
-        "smtp": {
-          "id": "7kNLcw3pmv3FWaq8",
-          "name": "SMTP account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "fromEmail": "vishal.anand@wyzmindz.com",
-        "toEmail": "wasif.ahmed@wyzmindz.com",
-        "subject": "❌ SSL Certificate Expired – Immediate Action Required",
-        "html": "=Hello Team,\n\nThis is a critical alert. The following SSL certificate has already expired.\n\nCertificate Details:\n--------------------\nDomain       : {{ $('Get row(s) in sheet').item.json.domain }}\nPort         : {{ $('Get row(s) in sheet').item.json.port }}\nExpired On  : {{$json.expiryDate}}\n\nImmediate action is required to restore secure connectivity.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nSSL Monitoring Bot\n",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        976,
-        128
-      ],
-      "id": "07831a1f-1287-4380-92c6-f76d2df80dd6",
-      "name": "Send email1",
-      "webhookId": "3214bea2-0b86-4a92-84ec-539e2b2e64c0",
-      "credentials": {
-        "smtp": {
-          "id": "7kNLcw3pmv3FWaq8",
-          "name": "SMTP account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -175,11 +98,60 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        752,
+        736,
         -16
       ],
       "id": "40a5c977-8589-4213-96d8-2995fa586ea2",
       "name": "If1"
+    },
+    {
+      "parameters": {
+        "fromEmail": "vishal.anand@wyzmindz.com",
+        "toEmail": "wasif.ahmed@wyzmindz.com",
+        "subject": "❌ SSL Certificate Expired – Immediate Action Required",
+        "html": "=Hello Team,\n\nThis is a critical alert. The following SSL certificate has already expired.\n\nCertificate Details:\n--------------------\nDomain       : {{ $('Domains and Ports').item.json.domain }}\nPort         : {{ $('Domains and Ports').item.json.port }}\nExpired On  : {{$json.expiryDate}}\n\nImmediate action is required to restore secure connectivity.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        128
+      ],
+      "id": "07831a1f-1287-4380-92c6-f76d2df80dd6",
+      "name": "Expired Mail",
+      "webhookId": "3214bea2-0b86-4a92-84ec-539e2b2e64c0",
+      "credentials": {
+        "smtp": {
+          "id": "7kNLcw3pmv3FWaq8",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "vishal.anand@wyzmindz.com",
+        "toEmail": "wasif.ahmed@wyzmindz.com",
+        "subject": "=⚠️ SSL Certificate Expiry Alert – {{$json.daysLeft}} days remaining",
+        "emailFormat": "text",
+        "text": "=Hello Team,\n\nThis is an automated alert to inform you that an SSL certificate is nearing expiration.\n\nCertificate Details:\n--------------------\nDomain        : {{ $('Domains and Ports').item.json.domain }}\nPort          : {{ $('Domains and Ports').item.json.port }}\nExpiry Date  : {{$json.expiryDate}}\nDays Remaining: {{$json.daysLeft}}\n\nAction Required:\n----------------\nPlease renew the SSL certificate before it expires to avoid service disruption.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        -144
+      ],
+      "id": "a503a937-ab19-4633-bd69-39fdab9a578b",
+      "name": "About to Expire",
+      "webhookId": "c9365294-35f6-4999-8dd8-dee5cedaf66f",
+      "credentials": {
+        "smtp": {
+          "id": "7kNLcw3pmv3FWaq8",
+          "name": "SMTP account"
+        }
+      }
     },
     {
       "parameters": {
@@ -202,17 +174,45 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -128,
+        -160,
         0
       ],
       "id": "34404431-1021-4f1b-b479-f18f561789be",
-      "name": "Get row(s) in sheet",
+      "name": "Domains and Ports",
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "6XxZcHTBmWUlZVX9",
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "=echo | openssl s_client -servername {{$json.domain}} -connect {{$json.domain}}:{{$json.port}} 2>/dev/null | openssl x509 -noout -enddate -fingerprint -sha256\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        48,
+        0
+      ],
+      "id": "61bde3b7-79af-4f29-b788-9cd87f249d0a",
+      "name": "Check SSL Certificate"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const output = $json.stdout;\n\n// Extract expiry date\nconst match = output.match(/notAfter=(.*)/);\nif (!match) {\n  throw new Error('Expiry date not found');\n}\n\nconst expiryDate = new Date(match[1].trim());\n\n// Calculate days left (TypeScript-safe)\nconst now = new Date();\nconst msLeft = expiryDate.getTime() - now.getTime();\nconst daysLeft = Math.floor(msLeft / (1000 * 60 * 60 * 24));\n\n// Return OBJECT (Function Item requirement)\nreturn {\n  expiryDate: expiryDate.toISOString(),\n  daysLeft\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        0
+      ],
+      "id": "695cdf62-a199-427c-8714-bbbbad152a72",
+      "name": "Compute SSL Expiry"
     }
   ],
   "pinData": {},
@@ -221,29 +221,7 @@
       "main": [
         [
           {
-            "node": "Get row(s) in sheet",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Execute Command": {
-      "main": [
-        [
-          {
-            "node": "Code in JavaScript",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Code in JavaScript": {
-      "main": [
-        [
-          {
-            "node": "If",
+            "node": "Domains and Ports",
             "type": "main",
             "index": 0
           }
@@ -266,25 +244,47 @@
       "main": [
         [
           {
-            "node": "Send email",
+            "node": "About to Expire",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Send email1",
+            "node": "Expired Mail",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get row(s) in sheet": {
+    "Domains and Ports": {
       "main": [
         [
           {
-            "node": "Execute Command",
+            "node": "Check SSL Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check SSL Certificate": {
+      "main": [
+        [
+          {
+            "node": "Compute SSL Expiry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute SSL Expiry": {
+      "main": [
+        [
+          {
+            "node": "If",
             "type": "main",
             "index": 0
           }
@@ -296,7 +296,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "8858fc00-ffde-4353-94ec-7e3bc0064f1c",
+  "versionId": "710d18a5-68ac-4ae4-8503-741ffe6c6354",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "c645d9be177ed29723e2f5824ec0595c289366bb90d67a6de46c574b38f8680d"
