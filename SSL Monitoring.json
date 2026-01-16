@@ -22,90 +22,6 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "fc86bfdd-06fd-4ef2-a233-806f4bb5877a",
-              "leftValue": "={{$json.daysLeft}}",
-              "rightValue": 7,
-              "operator": {
-                "type": "number",
-                "operation": "lt"
-              }
-            },
-            {
-              "id": "1443dcf7-2549-4dcb-ae81-b6837b20eee5",
-              "leftValue": "={{$json.daysLeft}}",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        496,
-        0
-      ],
-      "id": "ae98f5da-4065-4a79-800c-ca5d450fdef5",
-      "name": "If"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "28fd9d69-9e5e-4556-acb4-7181f0dddc4c",
-              "leftValue": "={{$json.daysLeft}}",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "gt"
-              }
-            },
-            {
-              "id": "c9696959-9d40-439b-8b63-a2221150ab17",
-              "leftValue": "={{$json.daysLeft}}",
-              "rightValue": 0,
-              "operator": {
-                "type": "number",
-                "operation": "lte"
-              }
-            }
-          ],
-          "combinator": "or"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        736,
-        -16
-      ],
-      "id": "40a5c977-8589-4213-96d8-2995fa586ea2",
-      "name": "If1"
-    },
-    {
-      "parameters": {
         "fromEmail": "vishal.anand@wyzmindz.com",
         "toEmail": "wasif.ahmed@wyzmindz.com",
         "subject": "❌ SSL Certificate Expired – Immediate Action Required",
@@ -213,6 +129,90 @@
       ],
       "id": "695cdf62-a199-427c-8714-bbbbad152a72",
       "name": "Compute SSL Expiry"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fc86bfdd-06fd-4ef2-a233-806f4bb5877a",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            },
+            {
+              "id": "1443dcf7-2549-4dcb-ae81-b6837b20eee5",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        0
+      ],
+      "id": "ae98f5da-4065-4a79-800c-ca5d450fdef5",
+      "name": "Condition 1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "28fd9d69-9e5e-4556-acb4-7181f0dddc4c",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "c9696959-9d40-439b-8b63-a2221150ab17",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        -16
+      ],
+      "id": "40a5c977-8589-4213-96d8-2995fa586ea2",
+      "name": "Condition 2"
     }
   ],
   "pinData": {},
@@ -222,36 +222,6 @@
         [
           {
             "node": "Domains and Ports",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If": {
-      "main": [
-        [
-          {
-            "node": "If1",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        []
-      ]
-    },
-    "If1": {
-      "main": [
-        [
-          {
-            "node": "About to Expire",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Expired Mail",
             "type": "main",
             "index": 0
           }
@@ -284,7 +254,37 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Condition 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Condition 1": {
+      "main": [
+        [
+          {
+            "node": "Condition 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Condition 2": {
+      "main": [
+        [
+          {
+            "node": "About to Expire",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Expired Mail",
             "type": "main",
             "index": 0
           }
@@ -296,7 +296,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "710d18a5-68ac-4ae4-8503-741ffe6c6354",
+  "versionId": "c2667dd1-6c02-44f1-8dea-1de66a9d4935",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "c645d9be177ed29723e2f5824ec0595c289366bb90d67a6de46c574b38f8680d"
