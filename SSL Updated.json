@@ -1,0 +1,204 @@
+{
+  "name": "SSL Updated",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -576,
+        16
+      ],
+      "id": "885f7b5c-cb9f-4754-b2e4-3011fb1fb64c",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1R3Ya_yHfkhy-d3S5puv-87YMd7KQWJkWGxTrX0sUKaE",
+          "mode": "list",
+          "cachedResultName": "domain-n8n-sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1R3Ya_yHfkhy-d3S5puv-87YMd7KQWJkWGxTrX0sUKaE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1R3Ya_yHfkhy-d3S5puv-87YMd7KQWJkWGxTrX0sUKaE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -368,
+        16
+      ],
+      "id": "4dd1ffa1-45d1-4acf-b209-0b1a9f0a0211",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "6XxZcHTBmWUlZVX9",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const domain = $json.domain;\nconst port = $json.port;\n\nconst output = $node[\"Execute Command\"].json.stdout;\n\nlet issuedDate = null;\nlet issuedToday = false;\nlet error;\n\nif (output) {\n    const match = output.match(/notBefore=(.+)/i);\n    if (match) {\n        issuedDate = new Date(match[1].trim());\n\n        // Compare dates in UTC (important)\n        const todayUTC = new Date().toISOString().slice(0, 10);\n        const issuedUTC = issuedDate.toISOString().slice(0, 10);\n\n        issuedToday = issuedUTC === todayUTC;\n    } else {\n        error = \"Issued date not found\";\n    }\n} else {\n    error = \"No command output\";\n}\n\nreturn [\n  {\n    json: {\n      domain,\n      port,\n      issuedDate: issuedDate ? issuedDate.toISOString() : null,\n      issuedToday,\n      error: error ?? null\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        16
+      ],
+      "id": "3966b5f9-69bc-4f47-ab18-5af9f2ba64db",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "=echo | openssl s_client -servername {{ $json.domain }} -connect {{ $json.domain }}:{{ $json.port }}\\\n| openssl x509 -noout -dates\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        16
+      ],
+      "id": "d920c31b-b218-4d9c-94e4-3b38d565295d",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "fromEmail": "vishal.anand@wyzmindz.com",
+        "toEmail": "wasif.ahmed@wyzmindz.com",
+        "subject": "=SSL Certificate Changed: {{ $('Get row(s) in sheet').item.json.domain }}",
+        "html": "=🔐 SSL Certificate Renewed\n\nDomain: {{ $('Get row(s) in sheet').item.json.domain }} \nPort: {{ $('Get row(s) in sheet').item.json.port }}\n\nIssued Date:\n{{$json.issuedDate}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "550118ce-1232-4836-81fc-ae835430b50f",
+      "name": "Send email",
+      "webhookId": "8afb6a21-de64-49e0-a86c-f7b64d3dba28",
+      "executeOnce": false,
+      "credentials": {
+        "smtp": {
+          "id": "7kNLcw3pmv3FWaq8",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6ec7ef6b-e1da-4a87-a0d5-95375b3dfd42",
+              "leftValue": "={{$json.issuedToday}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        208,
+        16
+      ],
+      "id": "8374e6c9-389b-479a-a9d5-2ee92526a37f",
+      "name": "If1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "12e5489d-2f7f-4b48-b30e-05858cdb5aa1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c645d9be177ed29723e2f5824ec0595c289366bb90d67a6de46c574b38f8680d"
+  },
+  "id": "FV77jnpQg72JuLkV",
+  "tags": []
+}
