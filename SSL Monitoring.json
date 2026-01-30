@@ -15,7 +15,7 @@
       "typeVersion": 1.3,
       "position": [
         -352,
-        0
+        -48
       ],
       "id": "94bb7577-83b8-49fa-8351-238c3ecf4037",
       "name": "Schedule Trigger"
@@ -25,14 +25,14 @@
         "fromEmail": "vishal.anand@wyzmindz.com",
         "toEmail": "wasif.ahmed@wyzmindz.com",
         "subject": "❌ SSL Certificate Expired – Immediate Action Required",
-        "html": "=Hello Team,\n\nThis is a critical alert. The following SSL certificate has already expired.\n\nCertificate Details:\n--------------------\nDomain       : {{ $('Domains and Ports').item.json.domain }}\nPort         : {{ $('Domains and Ports').item.json.port }}\nExpired On  : {{$json.expiryDate}}\n\nImmediate action is required to restore secure connectivity.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
+        "html": "=Hello Team,\n\nThis is a critical alert. The following SSL certificate has already expired.\n\nCertificate Details:\n--------------------\nDomain       : {{ $('Get row(s) in sheet').item.json['Domain '] }}\nPort         : {{ $('Get row(s) in sheet').item.json.Port }}\nExpired On  : {{$json.expiryDate}}\n\nImmediate action is required to restore secure connectivity.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
         "options": {}
       },
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        960,
-        128
+        1168,
+        48
       ],
       "id": "07831a1f-1287-4380-92c6-f76d2df80dd6",
       "name": "Expired Mail",
@@ -47,16 +47,18 @@
     {
       "parameters": {
         "fromEmail": "vishal.anand@wyzmindz.com",
-        "toEmail": "wasif.ahmed@wyzmindz.com",
+        "toEmail": "itsupport@wyzmindz.com",
         "subject": "=⚠️ SSL Certificate Expiry Alert – {{$json.daysLeft}} days remaining",
         "emailFormat": "text",
-        "text": "=Hello Team,\n\nThis is an automated alert to inform you that an SSL certificate is nearing expiration.\n\nCertificate Details:\n--------------------\nDomain        : {{ $('Domains and Ports').item.json.domain }}\nPort          : {{ $('Domains and Ports').item.json.port }}\nExpiry Date  : {{$json.expiryDate}}\nDays Remaining: {{$json.daysLeft}}\n\nAction Required:\n----------------\nPlease renew the SSL certificate before it expires to avoid service disruption.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
-        "options": {}
+        "text": "=Hello Team,\n\nThis is an automated alert to inform you that an SSL certificate is nearing expiration.\n\nCertificate Details:\n--------------------\nDomain        : {{ $('Get row(s) in sheet').item.json['Domain '] }}\nPort          : {{ $('Get row(s) in sheet').item.json.Port }}\nExpiry Date  : {{$json.expiryDate}}\nDays Remaining: {{$json.daysLeft}}\n\nAction Required:\n----------------\nPlease renew the SSL certificate before it expires to avoid service disruption.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
+        "options": {
+          "ccEmail": "bhavith.km@wyzmindz.com"
+        }
       },
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        960,
+        1168,
         -144
       ],
       "id": "a503a937-ab19-4633-bd69-39fdab9a578b",
@@ -71,47 +73,14 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1R3Ya_yHfkhy-d3S5puv-87YMd7KQWJkWGxTrX0sUKaE",
-          "mode": "list",
-          "cachedResultName": "domain-n8n-sheets",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1R3Ya_yHfkhy-d3S5puv-87YMd7KQWJkWGxTrX0sUKaE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "gid=0",
-          "mode": "list",
-          "cachedResultName": "Sheet1",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1R3Ya_yHfkhy-d3S5puv-87YMd7KQWJkWGxTrX0sUKaE/edit#gid=0"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
-      "position": [
-        -160,
-        0
-      ],
-      "id": "34404431-1021-4f1b-b479-f18f561789be",
-      "name": "Domains and Ports",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "6XxZcHTBmWUlZVX9",
-          "name": "Google Sheets account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "executeOnce": false,
-        "command": "=echo | openssl s_client -servername {{$json.domain}} -connect {{$json.domain}}:{{$json.port}} 2>/dev/null | openssl x509 -noout -enddate -fingerprint -sha256\n"
+        "command": "=echo | openssl s_client -servername {{ $json['Domain '] }} -connect {{ $json['Domain '] }}:{{ $json.Port }} 2>/dev/null | openssl x509 -noout -enddate -fingerprint -sha256\n"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        48,
-        0
+        112,
+        -48
       ],
       "id": "61bde3b7-79af-4f29-b788-9cd87f249d0a",
       "name": "Check SSL Certificate"
@@ -124,8 +93,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        256,
-        0
+        368,
+        -48
       ],
       "id": "695cdf62-a199-427c-8714-bbbbad152a72",
       "name": "Compute SSL Expiry"
@@ -166,8 +135,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        496,
-        0
+        608,
+        -48
       ],
       "id": "ae98f5da-4065-4a79-800c-ca5d450fdef5",
       "name": "Condition 1"
@@ -208,11 +177,44 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        736,
-        -16
+        880,
+        -64
       ],
       "id": "40a5c977-8589-4213-96d8-2995fa586ea2",
       "name": "Condition 2"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18ZRLz4PTZ3fXIQ7U9sRFFVvaRNxY858fVxo8YuKFuUI",
+          "mode": "list",
+          "cachedResultName": "n8n-live-domain",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18ZRLz4PTZ3fXIQ7U9sRFFVvaRNxY858fVxo8YuKFuUI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18ZRLz4PTZ3fXIQ7U9sRFFVvaRNxY858fVxo8YuKFuUI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -144,
+        -48
+      ],
+      "id": "b4722d41-b5df-4c56-a3fb-b53aa00b4d1d",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0omtTM5fqdHsKoNC",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -221,18 +223,7 @@
       "main": [
         [
           {
-            "node": "Domains and Ports",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Domains and Ports": {
-      "main": [
-        [
-          {
-            "node": "Check SSL Certificate",
+            "node": "Get row(s) in sheet",
             "type": "main",
             "index": 0
           }
@@ -290,13 +281,24 @@
           }
         ]
       ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Check SSL Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "c2667dd1-6c02-44f1-8dea-1de66a9d4935",
+  "versionId": "cd0feb7b-6fe7-478e-93ba-b3ec80ca0717",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "c645d9be177ed29723e2f5824ec0595c289366bb90d67a6de46c574b38f8680d"
