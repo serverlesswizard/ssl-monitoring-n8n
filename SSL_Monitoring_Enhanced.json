@@ -1,0 +1,478 @@
+{
+  "name": "SSL Monitoring",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [-352, -48],
+      "id": "94bb7577-83b8-49fa-8351-238c3ecf4037",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18ZRLz4PTZ3fXIQ7U9sRFFVvaRNxY858fVxo8YuKFuUI",
+          "mode": "list",
+          "cachedResultName": "n8n-live-domain",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18ZRLz4PTZ3fXIQ7U9sRFFVvaRNxY858fVxo8YuKFuUI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18ZRLz4PTZ3fXIQ7U9sRFFVvaRNxY858fVxo8YuKFuUI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [-144, -48],
+      "id": "b4722d41-b5df-4c56-a3fb-b53aa00b4d1d",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0omtTM5fqdHsKoNC",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "=echo | openssl s_client -servername {{ $json['Domain '] }} -connect {{ $json['Domain '] }}:{{ $json.Port }} 2>/dev/null | openssl x509 -noout -enddate -fingerprint -sha256\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [112, -48],
+      "id": "61bde3b7-79af-4f29-b788-9cd87f249d0a",
+      "name": "Check SSL Certificate"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const output = $json.stdout;\n\nconst match = output.match(/notAfter=(.*)/);\nif (!match) {\n  throw new Error('Expiry date not found');\n}\n\nconst expiryDate = new Date(match[1].trim());\nconst now = new Date();\nconst msLeft = expiryDate.getTime() - now.getTime();\nconst daysLeft = Math.floor(msLeft / (1000 * 60 * 60 * 24));\n\nreturn {\n  expiryDate: expiryDate.toISOString(),\n  daysLeft\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [368, -48],
+      "id": "695cdf62-a199-427c-8714-bbbbad152a72",
+      "name": "Compute SSL Expiry"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fc86bfdd-06fd-4ef2-a233-806f4bb5877a",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            },
+            {
+              "id": "1443dcf7-2549-4dcb-ae81-b6837b20eee5",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [608, -48],
+      "id": "ae98f5da-4065-4a79-800c-ca5d450fdef5",
+      "name": "Condition 1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "28fd9d69-9e5e-4556-acb4-7181f0dddc4c",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "c9696959-9d40-439b-8b63-a2221150ab17",
+              "leftValue": "={{$json.daysLeft}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [880, -64],
+      "id": "40a5c977-8589-4213-96d8-2995fa586ea2",
+      "name": "Condition 2"
+    },
+    {
+      "parameters": {
+        "fromEmail": "vishal.anand@wyzmindz.com",
+        "toEmail": "itsupport@wyzmindz.com",
+        "subject": "=⚠️ SSL Certificate Expiry Alert – {{$json.daysLeft}} days remaining",
+        "emailFormat": "text",
+        "text": "=Hello Team,\n\nThis is an automated alert to inform you that an SSL certificate is nearing expiration.\n\nCertificate Details:\n--------------------\nDomain        : {{ $('Get row(s) in sheet').item.json['Domain '] }}\nPort          : {{ $('Get row(s) in sheet').item.json.Port }}\nExpiry Date  : {{$json.expiryDate}}\nDays Remaining: {{$json.daysLeft}}\n\nAction Required:\n----------------\nPlease renew the SSL certificate before it expires to avoid service disruption.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
+        "options": {
+          "ccEmail": "bhavith.km@wyzmindz.com"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1168, -144],
+      "id": "a503a937-ab19-4633-bd69-39fdab9a578b",
+      "name": "About to Expire",
+      "webhookId": "c9365294-35f6-4999-8dd8-dee5cedaf66f",
+      "credentials": {
+        "smtp": {
+          "id": "7kNLcw3pmv3FWaq8",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "vishal.anand@wyzmindz.com",
+        "toEmail": "wasif.ahmed@wyzmindz.com",
+        "subject": "❌ SSL Certificate Expired – Immediate Action Required",
+        "html": "=Hello Team,\n\nThis is a critical alert. The following SSL certificate has already expired.\n\nCertificate Details:\n--------------------\nDomain       : {{ $('Get row(s) in sheet').item.json['Domain '] }}\nPort         : {{ $('Get row(s) in sheet').item.json.Port }}\nExpired On  : {{$json.expiryDate}}\n\nImmediate action is required to restore secure connectivity.\n\nThis notification was generated automatically by the SSL Monitoring system (n8n).\n\nRegards,\nVishal Anand\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1168, 48],
+      "id": "07831a1f-1287-4380-92c6-f76d2df80dd6",
+      "name": "Expired Mail",
+      "webhookId": "3214bea2-0b86-4a92-84ec-539e2b2e64c0",
+      "credentials": {
+        "smtp": {
+          "id": "7kNLcw3pmv3FWaq8",
+          "name": "SMTP account"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Initialize retry counter — starts at 0\nreturn {\n  domain: $('Get row(s) in sheet').item.json['Domain '],\n  port: $('Get row(s) in sheet').item.json.Port,\n  expiryDate: $json.expiryDate,\n  daysLeft: $json.daysLeft,\n  retryCount: 0,\n  maxRetries: 3\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 48],
+      "id": "init-retry-counter",
+      "name": "Init Retry State"
+    },
+
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "=sudo certbot renew --cert-name {{ $json.domain }} --non-interactive 2>&1"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [1680, 48],
+      "id": "run-certbot-renew",
+      "name": "Run Certbot Renew"
+    },
+
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const stdout = $json.stdout || '';\nconst exitCode = $json.exitCode;\n\n// Certbot prints 'Congratulations' on success\nconst success = exitCode === 0 && stdout.includes('Congratulations');\n\nreturn {\n  domain: $('Init Retry State').item.json.domain,\n  port: $('Init Retry State').item.json.port,\n  expiryDate: $('Init Retry State').item.json.expiryDate,\n  daysLeft: $('Init Retry State').item.json.daysLeft,\n  retryCount: $('Init Retry State').item.json.retryCount,\n  maxRetries: $('Init Retry State').item.json.maxRetries,\n  renewalSuccess: success,\n  certbotOutput: stdout\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1920, 48],
+      "id": "parse-certbot-result",
+      "name": "Parse Certbot Result"
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "renewal-success-check",
+              "leftValue": "={{$json.renewalSuccess}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2160, 48],
+      "id": "check-renewal-success",
+      "name": "Renewal Successful?"
+    },
+
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "sudo systemctl reload nginx 2>&1"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [2400, -96],
+      "id": "reload-nginx",
+      "name": "Reload Nginx"
+    },
+
+    {
+      "parameters": {
+        "fromEmail": "vishal.anand@wyzmindz.com",
+        "toEmail": "itsupport@wyzmindz.com",
+        "subject": "=✅ SSL Certificate Auto-Renewed Successfully – {{ $('Init Retry State').item.json.domain }}",
+        "html": "=Hello Team,\n\nGood news! The SSL certificate has been automatically renewed via Certbot.\n\nCertificate Details:\n--------------------\nDomain       : {{ $('Init Retry State').item.json.domain }}\nPort         : {{ $('Init Retry State').item.json.port }}\nPrevious Expiry: {{ $('Init Retry State').item.json.expiryDate }}\n\nCertbot Output:\n---------------\n{{ $('Parse Certbot Result').item.json.certbotOutput }}\n\nNginx has been reloaded to apply the new certificate.\n\nNo further action is required.\n\nRegards,\nVishal Anand\n(SSL Monitoring – n8n)\n",
+        "options": {
+          "ccEmail": "bhavith.km@wyzmindz.com"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [2640, -96],
+      "id": "success-email",
+      "name": "Send Renewal Success Email",
+      "credentials": {
+        "smtp": {
+          "id": "7kNLcw3pmv3FWaq8",
+          "name": "SMTP account"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Increment retry counter\nconst current = $json.retryCount;\nconst max = $json.maxRetries;\n\nreturn {\n  domain: $json.domain,\n  port: $json.port,\n  expiryDate: $json.expiryDate,\n  daysLeft: $json.daysLeft,\n  retryCount: current + 1,\n  maxRetries: max,\n  renewalSuccess: false,\n  certbotOutput: $json.certbotOutput,\n  retriesExhausted: (current + 1) >= max\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 192],
+      "id": "increment-retry",
+      "name": "Increment Retry Count"
+    },
+
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "retries-exhausted-check",
+              "leftValue": "={{$json.retriesExhausted}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [2640, 192],
+      "id": "check-retries-exhausted",
+      "name": "Retries Exhausted?"
+    },
+
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2880, 48],
+      "id": "wait-before-retry",
+      "name": "Wait 15 Minutes",
+      "webhookId": "wait-retry-webhook"
+    },
+
+    {
+      "parameters": {
+        "fromEmail": "vishal.anand@wyzmindz.com",
+        "toEmail": "wasif.ahmed@wyzmindz.com",
+        "subject": "=🚨 SSL Auto-Renewal FAILED After 3 Attempts – {{ $json.domain }}",
+        "html": "=Hello Team,\n\nCRITICAL: Automatic SSL certificate renewal has failed after 3 attempts.\nImmediate manual intervention is required.\n\nCertificate Details:\n--------------------\nDomain       : {{ $json.domain }}\nPort         : {{ $json.port }}\nExpiry Date  : {{ $json.expiryDate }}\nDays Left    : {{ $json.daysLeft }}\nAttempts Made: {{ $json.retryCount }}\n\nLast Certbot Output:\n--------------------\n{{ $json.certbotOutput }}\n\nCommon Causes:\n--------------\n- Port 80 is not accessible (HTTP-01 challenge blocked)\n- DNS not pointing to this server\n- sudo permissions missing for certbot\n- Domain name mismatch in certbot\n\nPlease renew manually:\n  sudo certbot renew --cert-name {{ $json.domain }} --non-interactive\n  sudo systemctl reload nginx\n\nRegards,\nVishal Anand\n(SSL Monitoring – n8n)\n",
+        "options": {
+          "ccEmail": "bhavith.km@wyzmindz.com"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [2880, 192],
+      "id": "failure-alert-email",
+      "name": "Send Failure Alert Email",
+      "credentials": {
+        "smtp": {
+          "id": "7kNLcw3pmv3FWaq8",
+          "name": "SMTP account"
+        }
+      }
+    },
+
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR_JIRA_DOMAIN.atlassian.net/rest/api/3/issue",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fields\": {\n    \"project\": { \"key\": \"IT\" },\n    \"summary\": \"SSL Auto-Renewal Failed: {{ $json.domain }}\",\n    \"description\": {\n      \"type\": \"doc\",\n      \"version\": 1,\n      \"content\": [{\n        \"type\": \"paragraph\",\n        \"content\": [{\n          \"type\": \"text\",\n          \"text\": \"SSL certificate auto-renewal failed after 3 attempts for domain: {{ $json.domain }}. Expiry: {{ $json.expiryDate }}. Certbot output: {{ $json.certbotOutput }}\"\n        }]\n      }]\n    },\n    \"issuetype\": { \"name\": \"Bug\" },\n    \"priority\": { \"name\": \"Highest\" }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2880, 352],
+      "id": "create-jira-ticket",
+      "name": "Create Jira Ticket",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "REPLACE_WITH_YOUR_JIRA_CREDENTIAL_ID",
+          "name": "Jira Basic Auth"
+        }
+      }
+    }
+  ],
+
+  "pinData": {},
+
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Get row(s) in sheet", "type": "main", "index": 0 }]]
+    },
+    "Get row(s) in sheet": {
+      "main": [[{ "node": "Check SSL Certificate", "type": "main", "index": 0 }]]
+    },
+    "Check SSL Certificate": {
+      "main": [[{ "node": "Compute SSL Expiry", "type": "main", "index": 0 }]]
+    },
+    "Compute SSL Expiry": {
+      "main": [[{ "node": "Condition 1", "type": "main", "index": 0 }]]
+    },
+    "Condition 1": {
+      "main": [
+        [{ "node": "Condition 2", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Condition 2": {
+      "main": [
+        [{ "node": "About to Expire", "type": "main", "index": 0 }],
+        [
+          { "node": "Expired Mail", "type": "main", "index": 0 },
+          { "node": "Init Retry State", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Init Retry State": {
+      "main": [[{ "node": "Run Certbot Renew", "type": "main", "index": 0 }]]
+    },
+    "Run Certbot Renew": {
+      "main": [[{ "node": "Parse Certbot Result", "type": "main", "index": 0 }]]
+    },
+    "Parse Certbot Result": {
+      "main": [[{ "node": "Renewal Successful?", "type": "main", "index": 0 }]]
+    },
+    "Renewal Successful?": {
+      "main": [
+        [{ "node": "Reload Nginx", "type": "main", "index": 0 }],
+        [{ "node": "Increment Retry Count", "type": "main", "index": 0 }]
+      ]
+    },
+    "Reload Nginx": {
+      "main": [[{ "node": "Send Renewal Success Email", "type": "main", "index": 0 }]]
+    },
+    "Increment Retry Count": {
+      "main": [[{ "node": "Retries Exhausted?", "type": "main", "index": 0 }]]
+    },
+    "Retries Exhausted?": {
+      "main": [
+        [
+          { "node": "Send Failure Alert Email", "type": "main", "index": 0 },
+          { "node": "Create Jira Ticket", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Wait 15 Minutes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Wait 15 Minutes": {
+      "main": [[{ "node": "Run Certbot Renew", "type": "main", "index": 0 }]]
+    }
+  },
+
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cd0feb7b-6fe7-478e-93ba-b3ec80ca0717",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c645d9be177ed29723e2f5824ec0595c289366bb90d67a6de46c574b38f8680d"
+  },
+  "id": "J18VN55N4rdIyfc9",
+  "tags": []
+}
